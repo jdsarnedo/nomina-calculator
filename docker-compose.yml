@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: nomina-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - nomina-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nomina-backend
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin123@mongodb:27017/nomina_db?authSource=admin
+      SPRING_DATA_MONGODB_DATABASE: nomina_db
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - nomina-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nomina-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nomina-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  nomina-network:
+    driver: bridge
